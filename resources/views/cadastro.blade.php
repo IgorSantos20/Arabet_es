@@ -26,12 +26,17 @@
 
     <div>
         <label class="block text-sm text-gray-400 mb-2">Nome Completo</label>
-        <input type="text" name="name" required class="w-full rounded-2xl border border-[#202020] bg-[#171717] px-5 py-4 text-white focus:border-lime-400 outline-none transition" placeholder="Seu nome">
+        <input type="text" name="nome" required class="w-full rounded-2xl border border-[#202020] bg-[#171717] px-5 py-4 text-white focus:border-lime-400 outline-none transition" placeholder="Seu nome">
     </div>
 
     <div>
         <label class="block text-sm text-gray-400 mb-2">CPF</label>
         <input type="text" name="cpf" required class="w-full rounded-2xl border border-[#202020] bg-[#171717] px-5 py-4 text-white focus:border-lime-400 outline-none transition" placeholder="000.000.000-00">
+    </div>
+
+    <div>
+        <label class="block text-sm text-gray-400 mb-2">Data de Nascimento</label>
+        <input type="date" name="data_nascimento" required class="w-full rounded-2xl border border-[#202020] bg-[#171717] px-5 py-4 text-white focus:border-lime-400 outline-none transition">
     </div>
 
     <div>
@@ -44,48 +49,37 @@
         <input type="password" name="password" required class="w-full rounded-2xl border border-[#202020] bg-[#171717] px-5 py-4 text-white focus:border-lime-400 outline-none transition" placeholder="••••••••">
     </div>
 
-    <input type="hidden" name="role" id="role" value="cliente">
 
     <div class="grid grid-cols-2 gap-4">
-    <button type="button" id="btn-cliente" onclick="selectRole('cliente')" 
-        class="btn-role rounded-2xl border border-lime-400 bg-lime-400 py-3 text-black font-semibold transition">
-        Cliente
-    </button>
-    <button type="button" id="btn-admin" onclick="selectRole('admin')" 
-        class="btn-role rounded-2xl border border-[#202020] bg-[#171717] py-3 text-white font-semibold hover:border-lime-400 transition">
-        Administrador
-    </button>
-</div>
+        <button type="button" id="btn-APOSTADOR" onclick="selectRole('APOSTADOR')" 
+            class="btn-role rounded-2xl border border-lime-400 bg-lime-400 py-3 text-black font-semibold transition">
+            Cliente
+        </button>
+        <button type="button" id="btn-ADMINISTRADOR" onclick="selectRole('ADMINISTRADOR')" 
+            class="btn-role rounded-2xl border border-[#202020] bg-[#171717] py-3 text-white font-semibold hover:border-lime-400 transition">
+            Administrador
+        </button>
+    </div>
 
-<input type="hidden" name="role" id="role" value="cliente">
+    <input type="hidden" name="tipo" id="input_tipo" value="APOSTADOR">
 
     <button type="submit" class="w-full rounded-2xl bg-lime-400 py-4 font-bold text-black transition hover:bg-lime-300 mt-4">
         Cadastrar-se
     </button>
+</form> <script>
+function selectRole(tipo) {
+    // 1. Atualiza o valor do input hidden
+    document.getElementById('input_tipo').value = tipo;
 
-    <a href="/" class="block text-center text-gray-500 hover:text-white transition text-sm mt-4">
-        Voltar para a página inicial
-    </a>
-</form>
-
-    </div>
-</section>
-
-<script>
-function selectRole(role) {
-
-    document.getElementById('role').value = role;
-
+    // 2. Reseta o visual de todos os botões
     const buttons = document.querySelectorAll('.btn-role');
-    
-
     buttons.forEach(btn => {
         btn.classList.remove('bg-lime-400', 'text-black', 'border-lime-400');
         btn.classList.add('bg-[#171717]', 'text-white', 'border-[#202020]');
     });
 
-
-    const selectedBtn = document.getElementById('btn-' + role);
+    // 3. Aplica o visual ativo no botão clicado
+    const selectedBtn = document.getElementById('btn-' + tipo);
     selectedBtn.classList.remove('bg-[#171717]', 'text-white', 'border-[#202020]');
     selectedBtn.classList.add('bg-lime-400', 'text-black', 'border-lime-400');
 }

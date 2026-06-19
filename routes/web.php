@@ -13,11 +13,13 @@ Route::get('/', function () {
 
 Route::get('/cadastro', [AuthController::class, 'create'])->name('cadastro.index');
 Route::post('/cadastro', [AuthController::class, 'store'])->name('cadastro.store');
-Route::get('/dash', function () {
-    return view('dash');
-});
+
 Route::get('/dashboard', [DashboardController::class, 'index']);
 
 Route::get('/admin', function () {
     return Inertia::render('AdminPanel');
 })->name('admin.panel');
+
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'authenticate'])->name('login.authenticate');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

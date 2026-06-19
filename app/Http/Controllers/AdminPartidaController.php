@@ -43,7 +43,7 @@ class AdminPartidaController extends Controller
 
         return response()->json(['message' => 'Partida criada com sucesso!', 'partida' => $partida]);
     }
-    // Método para mudar as odds de um jogo antes dele começar
+   
     public function atualizarOdds(Request $request, $id)
     {
         $request->validate([
@@ -67,7 +67,6 @@ class AdminPartidaController extends Controller
         return response()->json(['message' => 'Odds atualizadas com sucesso!', 'partida' => $partida]);
     }
 
-    // Método para encerrar o jogo e liquidar (pagar) as apostas
     public function finalizarPartida(Request $request, $id)
     {
         $request->validate([
@@ -83,14 +82,12 @@ class AdminPartidaController extends Controller
                     return response()->json(['error' => 'Partida inválida ou já finalizada.'], 400);
                 }
 
-                // 1. Atualiza o placar e o status da partida
                 $partida->update([
                     'placar_mandante' => $request->placar_mandante,
                     'placar_visitante' => $request->placar_visitante,
                     'status' => 'FINALIZADA'
                 ]);
 
-                // 2. Descobre quem foi o vencedor real no campo
                 $resultadoReal = 'EMPATE';
                 if ($request->placar_mandante > $request->placar_visitante) {
                     $resultadoReal = 'MANDANTE';
@@ -98,35 +95,34 @@ class AdminPartidaController extends Controller
                     $resultadoReal = 'VISITANTE';
                 }
 
-                // 3. Busca todas as apostas pendentes deste jogo
                 $apostas = Aposta::where('id_partida', $id)
                                  ->where('status', 'PENDENTE')
                                  ->get();
 
-                // 4. Processa o pagamento de cada aposta
+
                 foreach ($apostas as $aposta) {
                     if ($aposta->palpite === $resultadoReal) {
-                        // O apostador ACERTOU
+
                         $aposta->update(['status' => 'GANHA']);
                         
-                        // Calcula o prêmio baseado na odd gravada no momento da aposta
+
                         $valorPremio = $aposta->valor * $aposta->odd_momento;
 
-                        // Trava a linha do apostador no banco para evitar conflito de concorrência
+
                         $apostador = Apostador::lockForUpdate()->find($aposta->id_apostador);
                         $apostador->increment('saldo', $valorPremio);
 
-                        // Registra a entrada do dinheiro na conta
+
                         Transacao::create([
                             'id_apostador' => $aposta->id_apostador,
-                            'tipo' => 'DEPOSITO', // Usamos DEPOSITO pois o banco restringe a DEPOSITO e SAQUE
+                            'tipo' => 'DEPOSITO', 
                             'valor' => $valorPremio,
                             'data_hora' => now()
                         ]);
                     } else {
-                        // O apostador ERROU
+                     
                         $aposta->update(['status' => 'PERDIDA']);
-                        // Não desconta saldo aqui, pois o dinheiro já saiu da conta no ato da aposta
+                       
                     }
                 }
 
