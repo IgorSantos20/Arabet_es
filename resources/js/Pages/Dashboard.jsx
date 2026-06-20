@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from '@inertiajs/react';
 import { 
-  Home, Ticket, Gift, Settings, Search, Bell, User, X
+  Home, Ticket, Gift, Settings, Search, Bell, User, X, Plus, DollarSign 
 } from 'lucide-react';
 
 import { usePage } from '@inertiajs/react';
 import MinhasApostasComponent from '@/Components/MinhasApostasComponent';
 
 export default function Dashboard() {
+  // 👇 ID do usuário que já está cadastrado no seu banco de dados
+  const USUARIO_ID = 4; 
+  const [modalDepositoAberto, setModalDepositoAberto] = useState(false);
+  const [valorDeposito, setValorDeposito] = useState('');
+  const [carregandoDeposito, setCarregandoDeposito] = useState(false);
   const USUARIO_ID = 2
 
   // ==========================================
@@ -30,6 +36,13 @@ export default function Dashboard() {
   useEffect(() => {
     const buscarSaldoDoBanco = async () => {
       try {
+        const resposta = await fetch(`http://localhost:8000/api/usuario/${USUARIO_ID}`);
+        
+        if (resposta.ok) {
+          const dados = await resposta.json();
+          setSaldo(parseFloat(dados.saldo || 0)); 
+        } else {
+          console.error("Erro ao buscar dados do usuário no banco");
         const resposta = await fetch(`http://localhost:8000/api/historico/${USUARIO_ID}`);
         if (resposta.ok) {
           const dados = await resposta.json();
@@ -112,26 +125,42 @@ export default function Dashboard() {
   // ==========================================
   // 4. API: REALIZAR DEPÓSITO
   // ==========================================
-  const realizarDeposito = async () => {
-    const valorDigitado = window.prompt('Digite o valor que deseja depositar (Ex: 50.00):');
-    if (!valorDigitado || isNaN(valorDigitado) || parseFloat(valorDigitado) <= 0) return; 
+  const enviarDepositoBanco = async (e) => {
+    e.preventDefault();
+
+    const valorNumerico = parseFloat(valorDeposito);
+
+    if (isNaN(valorNumerico) || valorNumerico <= 0) {
+      alert("Por favor, digite um valor de depósito válido.");
+      return;
+    }
+
+    setCarregandoDeposito(true);
 
     try {
       const resposta = await fetch('http://localhost:8000/api/depositar', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ id_apostador: USUARIO_ID, valor: parseFloat(valorDigitado) })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id_apostador: USUARIO_ID, 
+          valor: valorNumerico 
+        })
       });
-      const resultado = await resposta.json();
+
       if (resposta.ok) {
-        alert(`💰 Depósito de R$ ${valorDigitado} realizado com sucesso!`);
-        setSaldo(prevSaldo => prevSaldo + parseFloat(valorDigitado));
+        setSaldo((saldoAtual) => saldoAtual + valorNumerico);
+        setModalDepositoAberto(false);
+        setValorDeposito('');
+        setMensagem('✅ Depósito realizado com sucesso!');
+        setTimeout(() => setMensagem(''), 4000);
       } else {
-        alert('❌ Erro no depósito: ' + (resultado.message || 'Falha na transação.'));
+        setMensagem('❌ Erro do servidor ao realizar o depósito.');
       }
     } catch (erro) {
       console.error("Erro ao depositar:", erro);
-      alert('❌ Erro de conexão ao tentar depositar.');
+      setMensagem('❌ Erro de conexão ao tentar depositar.');
+    } finally {
+      setCarregandoDeposito(false);
     }
   };
 
@@ -234,18 +263,23 @@ export default function Dashboard() {
               <span className="text-sm font-bold text-[#7DFF00]">R$ {saldo.toFixed(2)}</span>
               <div className="flex gap-2">
                 <button 
-                  onClick={realizarDeposito}
-                  className="bg-[#7DFF00] text-[#050505] hover:bg-[#56C800] rounded w-8 h-8 flex items-center justify-center text-lg font-bold transition"
-                  title="Depositar"
+                  onClick={() => setModalDepositoAberto(true)} 
+                  className="p-1.5 bg-green-500 hover:bg-green-600 text-black rounded-lg transition-colors"
+                  title="Depositar Saldo"
                 >
-                  +
+                  <Plus size={18} className="font-bold" />
                 </button>
               </div>
             </div>
 
-            <div className="w-10 h-10 rounded-md bg-[#111111] border border-[#202020] text-[#BDBDBD] hover:text-[#7DFF00] hover:border-[#7DFF00] transition cursor-pointer flex items-center justify-center">
+            {/* 👇 AQUI ESTÁ A ALTERAÇÃO COM O LINK DO INERTIA 👇 */}
+            <Link 
+              href="/perfil" 
+              className="w-10 h-10 rounded-md bg-[#111111] border border-[#202020] text-[#BDBDBD] hover:text-[#7DFF00] hover:border-[#7DFF00] transition cursor-pointer flex items-center justify-center"
+            >
               <User size={20} />
-            </div>
+            </Link>
+            {/* 👆 ============================================== 👆 */}
           </div>
         </header>
 
@@ -405,6 +439,88 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      {/* ================= 📱 TELA/MODAL DE DEPÓSITO ================= */}
+      {modalDepositoAberto && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl text-white relative">
+            
+            {/* Botão de Fechar (X) no topo direito do modal */}
+            <button 
+              onClick={() => { setModalDepositoAberto(false); setValorDeposito(''); }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Título */}
+            <h3 className="text-xl font-bold mb-2 flex items-center gap-2 text-green-400">
+              <DollarSign size={22} /> Realizar Depósito
+            </h3>
+            <p className="text-gray-400 text-sm mb-6">
+              Adicione saldo à sua conta AraBet para continuar jogando.
+            </p>
+
+            {/* Formulário */}
+            <form onSubmit={enviarDepositoBanco} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Valor do Depósito (R$)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">R$</span>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    min="1"
+                    placeholder="0,00"
+                    value={valorDeposito}
+                    onChange={(e) => setValorDeposito(e.target.value)}
+                    className="w-full bg-gray-950 border border-gray-800 focus:border-green-500 rounded-xl py-3 pl-10 pr-4 text-white font-medium text-lg outline-none transition-colors placeholder:text-gray-700"
+                    required
+                    disabled={carregandoDeposito}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Botões Rápidos de Sugestão */}
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                {[20, 50, 100].map((valor) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    onClick={() => setValorDeposito(valor.toString())}
+                    className="py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors border border-transparent hover:border-gray-600"
+                  >
+                    + R$ {valor}
+                  </button>
+                ))}
+              </div>
+
+              {/* Ações do Formulário */}
+              <div className="flex gap-3 pt-4 border-t border-gray-800/60 mt-6">
+                <button 
+                  type="button"
+                  onClick={() => { setModalDepositoAberto(false); setValorDeposito(''); }}
+                  className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 rounded-xl font-semibold transition-colors"
+                  disabled={carregandoDeposito}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-black rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  disabled={carregandoDeposito}
+                >
+                  {carregandoDeposito ? 'Processando...' : 'Confirmar Depósito'}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

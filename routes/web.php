@@ -16,6 +16,9 @@ Route::post('/cadastro', [AuthController::class, 'store'])->name('cadastro.store
 
 Route::get('/dashboard', [DashboardController::class, 'index']);
 
+Route::get('/perfil', function () {
+    return Inertia::render('perfil'); // Renderiza o componente perfil.jsx
+});
 Route::get('/admin', function () {
     return Inertia::render('AdminPanel');
 })->name('admin.panel');
